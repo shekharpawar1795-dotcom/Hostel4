@@ -1,0 +1,298 @@
+<%- include('partials/header', { title: 'System administration' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">SYSTEM ADMINISTRATION</div>
+    <h1>Campus administration</h1>
+    <p>Manage hostels, rooms, student accounts and staff access from one place.</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat">
+    <div class="stat-label">Active hostels</div>
+    <div class="stat-number"><%= hostels.filter(h => h.active).length %></div>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Registered users</div>
+    <div class="stat-number"><%= users.length %></div>
+    <span class="stat-foot">Latest <%= users.length %></span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Rooms</div>
+    <div class="stat-number"><%= rooms.length %></div>
+    <span class="stat-foot">Total <%= rooms.length %></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h3>Hostel management</h3>
+      <p>Add hostels, archive closed hostels, or remove an unused hostel.</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Hostel</th>
+          <th>Status</th>
+          <th>Emergency contact</th>
+          <th>Manage</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (hostels && hostels.length > 0) { %>
+          <% hostels.forEach(h => { %>
+          <tr>
+            <td><strong><%= h.code %></strong></td>
+            <td><%= h.name %></td>
+            <td><span class="status <%= h.active ? 'status-closed' : 'status-rejected' %>"><%= h.active ? 'Active' : 'Archived' %></span></td>
+            <td>
+              <form method="post" action="/admin/hostels/<%= h.id %>/emergency-contact" class="phone-edit">
+                <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+                <input name="emergency_phone" aria-label="<%= h.name %> emergency phone" placeholder="On-call number" value="<%= h.emergency_phone || '' %>" maxlength="30">
+                <button type="submit" class="btn btn-small btn-outline">Save</button>
+              </form>
+            </td>
+            <td>
+              <div class="inline-actions">
+                <form method="post" action="/admin/hostels/<%= h.id %>/toggle">
+                  <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+                  <button class="btn btn-small btn-outline" type="submit"><%= h.active ? 'Archive' : 'Restore' %></button>
+                </form>
+                <form method="post" action="/admin/hostels/<%= h.id %>/delete">
+                  <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+                  <button class="btn btn-small btn-danger-outline" type="submit">Delete unused</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="5">No hostels created yet</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+  <form method="post" action="/admin/hostels" class="admin-inline-form">
+    <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+    <div>
+      <label>Hostel code</label>
+      <input name="code" placeholder="HOSTEL_A" maxlength="24" required>
+    </div>
+    <div>
+      <label>Hostel name</label>
+      <input name="name" placeholder="Boys Hostel A" maxlength="150" required>
+    </div>
+    <div>
+      <label>Emergency phone (optional)</label>
+      <input name="emergency_phone" placeholder="+91 ..." maxlength="30">
+    </div>
+    <button class="btn btn-primary" type="submit">＋ Add hostel</button>
+  </form>
+</div>
+
+<div class="admin-grid">
+  <div class="card">
+    <h3>Add room</h3>
+    <form method="post" action="/admin/rooms">
+      <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+      <label>Hostel</label>
+      <select name="hostel_id" required>
+        <option value="">Choose hostel</option>
+        <% hostels.filter(h => h.active).forEach(h => { %>
+        <option value="<%= h.id %>"><%= h.name %></option>
+        <% }) %>
+      </select>
+      <div class="form-row">
+        <div>
+          <label>Building</label>
+          <input name="building" value="Main" required>
+        </div>
+        <div>
+          <label>Floor</label>
+          <input name="floor" value="0">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Room number</label>
+          <input name="number" placeholder="204" required>
+        </div>
+        <div>
+          <label>Capacity</label>
+          <input type="number" name="capacity" value="2" min="1" max="20" required>
+        </div>
+      </div>
+      <button class="btn btn-primary" type="submit">Add room</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Create user account</h3>
+    <form method="post" action="/admin/users">
+      <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+      <label>Role</label>
+      <select name="role" required>
+        <% roles.forEach(r => { %>
+        <option value="<%= r %>"><%= titleCase(r) %></option>
+        <% }) %>
+      </select>
+      <label>URN / Staff Login ID</label>
+      <input name="login_id" placeholder="e.g. 2026CS001" required>
+      <label>Full name</label>
+      <input name="name" required>
+      <label>Email (optional)</label>
+      <input name="email" type="email">
+      <button class="btn btn-primary" type="submit">Create & issue temporary password</button>
+    </form>
+  </div>
+</div>
+
+<div class="admin-grid">
+  <div class="card">
+    <h3>Allocate student room</h3>
+    <p class="muted">Moving a student ends their prior active allocation while preserving complaint history.</p>
+    <form method="post" action="/admin/allocations">
+      <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+      <label>Student URN</label>
+      <input name="student_urn" required placeholder="Enter exact student URN" maxlength="60">
+      <label>Room</label>
+      <select name="room_id" required>
+        <option value="">Select room</option>
+        <% rooms.filter(r => r.active).forEach(r => { %>
+        <option value="<%= r.id %>"><%= (hostel_by_id[r.hostel_id] ? hostel_by_id[r.hostel_id].name : '') %> · <%= r.building %> <%= r.number %> (capacity <%= r.capacity %>)</option>
+        <% }) %>
+      </select>
+      <button class="btn btn-primary" type="submit">Save room allocation</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h3>Grant hostel access</h3>
+    <p class="muted">Assign Rector, Dean or Maintenance Staff access to one or more hostels.</p>
+    <form method="post" action="/admin/scopes">
+      <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+      <label>Staff account</label>
+      <select name="user_id" required>
+        <option value="">Choose staff</option>
+        <% staff_users.forEach(u => { %>
+        <option value="<%= u.id %>"><%= u.name %> · <%= titleCase(u.role) %></option>
+        <% }) %>
+      </select>
+      <label>Hostel</label>
+      <select name="hostel_id" required>
+        <option value="">Choose hostel</option>
+        <% hostels.filter(h => h.active).forEach(h => { %>
+        <option value="<%= h.id %>"><%= h.name %></option>
+        <% }) %>
+      </select>
+      <button class="btn btn-primary" type="submit">Grant hostel access</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h3>Bulk student import</h3>
+      <p>Paste CSV with header <code>urn,name,email</code>. Up to 250 records per batch.</p>
+    </div>
+  </div>
+  <form method="post" action="/admin/users/import">
+    <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+    <textarea rows="4" name="csv_text" placeholder="urn,name,email&#10;2026CS001,Student One,student1@college.edu&#10;2026CS002,Student Two,student2@college.edu"></textarea>
+    <button class="btn btn-primary" type="submit">Import students & generate individual passwords</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h3>User accounts</h3>
+      <p>Issue fresh temporary passwords only after verifying user identity.</p>
+    </div>
+    <form method="get" action="/dashboard" class="search-wrap">
+      <input name="user_search" value="<%= user_search || '' %>" placeholder="Search URN or name" aria-label="Search users">
+      <button class="btn btn-small btn-outline" type="submit">Search</button>
+    </form>
+  </div>
+  <div class="table-wrap">
+    <table id="usersTable">
+      <thead>
+        <tr>
+          <th>URN / Login</th>
+          <th>Name</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Account actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% users.forEach(u => { %>
+        <tr>
+          <td><strong><%= u.login_id %></strong></td>
+          <td><%= u.name %></td>
+          <td><%= titleCase(u.role) %></td>
+          <td>
+            <%= u.active ? 'Active' : 'Disabled' %>
+            <% if (u.force_password_change) { %><small>Temporary password</small><% } %>
+          </td>
+          <td>
+            <div class="inline-actions">
+              <form method="post" action="/admin/users/<%= u.id %>/reset">
+                <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+                <button type="submit" class="btn btn-small btn-outline">Reset password</button>
+              </form>
+              <% if (u.id !== user.id) { %>
+              <form method="post" action="/admin/users/<%= u.id %>/toggle">
+                <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+                <button type="submit" class="btn btn-small btn-danger-outline"><%= u.active ? 'Disable' : 'Enable' %></button>
+              </form>
+              <% } %>
+            </div>
+          </td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h3>Recent administrative changes</h3>
+      <p>Records of hostel, room, account and access operations (passwords are never logged).</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Action</th>
+          <th>Target</th>
+          <th>Details</th>
+          <th>When</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (admin_audit && admin_audit.length > 0) { %>
+          <% admin_audit.forEach(log => { %>
+          <tr>
+            <td><strong><%= titleCase(log.action) %></strong></td>
+            <td><%= log.target_type %></td>
+            <td><%= log.detail %></td>
+            <td><%= formatDateTime(log.at) %></td>
+          </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="4" class="empty-cell">No administrative changes recorded yet.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('partials/footer') %>

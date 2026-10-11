@@ -1,0 +1,53 @@
+<%- include('partials/header', { title: 'My profile' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">YOUR ACCOUNT</div>
+    <h1>My profile</h1>
+    <p>Update your contact details. Official identity and room data are managed by administration.</p>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="card">
+    <h3>College identity</h3>
+    <div class="detail-row">
+      <span>Full name</span>
+      <b><%= user.name %></b>
+    </div>
+    <div class="detail-row">
+      <span>URN / Login</span>
+      <b><%= user.login_id %></b>
+    </div>
+    <div class="detail-row">
+      <span>Role</span>
+      <b><%= titleCase(user.role) %></b>
+    </div>
+    <% if (locals.allocation) { %>
+    <div class="detail-row">
+      <span>Hostel</span>
+      <b><%= allocation[2].name %></b>
+    </div>
+    <div class="detail-row">
+      <span>Room</span>
+      <b><%= allocation[1].building %> / <%= allocation[1].number %></b>
+    </div>
+    <% } %>
+    <div class="callout">If your URN, hostel or room is incorrect, contact System Admin. These fields cannot be changed by students.</div>
+  </div>
+
+  <div class="card">
+    <h3>Edit contact information</h3>
+    <form method="post" action="/profile">
+      <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+      <label for="preferred_name">Preferred name</label>
+      <input id="preferred_name" name="preferred_name" maxlength="100" value="<%= user.preferred_name || '' %>">
+      <label for="phone">Contact phone</label>
+      <input id="phone" name="phone" maxlength="25" value="<%= user.phone || '' %>" placeholder="+91 ...">
+      <label>College email (admin-managed)</label>
+      <input value="<%= user.email || 'Not provided' %>" disabled>
+      <button class="btn btn-primary" type="submit">Save profile</button>
+    </form>
+    <a href="/profile/password" class="link">Change password →</a>
+  </div>
+</div>
+<%- include('partials/footer') %>

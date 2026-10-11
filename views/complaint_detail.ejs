@@ -1,0 +1,277 @@
+<%- include('partials/header', { title: 'Complaint ' + c.number }) %>
+<div class="page-header">
+  <div>
+    <a class="back" href="/dashboard">← Back to dashboard</a>
+    <div class="eyebrow">COMPLAINT / <%= c.number %></div>
+    <h1><%= titleCase(c.effective_category) %> request</h1>
+    <p>Submitted <%= formatDateTime(c.created_at) %> · <%= hostel ? hostel.name : '' %> / <%= room ? room.building : '' %> / Room <%= room ? room.number : '' %></p>
+  </div>
+  <span class="status status-<%= c.status.toLowerCase() %> large-status"><%= titleCase(c.status) %></span>
+</div>
+
+<div class="two-col uneven">
+  <div class="detail-main">
+    <div class="card">
+      <div class="card-head">
+        <h3>Complaint details</h3>
+        <span class="priority-<%= c.effective_priority.toLowerCase() %>"><%= titleCase(c.effective_priority) %> priority</span>
+      </div>
+      <p class="complaint-description"><%= c.description %></p>
+      <div class="meta-grid">
+        <div>
+          <small>Original category</small>
+          <strong><%= titleCase(c.category) %></strong>
+        </div>
+        <div>
+          <small>Official category</small>
+          <strong><%= titleCase(c.effective_category) %></strong>
+        </div>
+        <div>
+          <small>Work cycle</small>
+          <strong>#<%= c.cycle_number %></strong>
+        </div>
+        <div>
+          <small>Assigned staff</small>
+          <strong><%= (c.current_staff_id && people[c.current_staff_id]) ? people[c.current_staff_id].name : 'Not assigned' %></strong>
+        </div>
+      </div>
+    </div>
+
+    <% if (pics && pics.length > 0) { %>
+    <div class="card">
+      <h3>Photo evidence</h3>
+      <div class="photo-grid">
+        <% pics.forEach(photo => { %>
+        <a href="/photos/<%= photo.id %>" target="_blank" rel="noopener">
+          <img src="/photos/<%= photo.id %>" alt="Attached complaint photo">
+          <span><%= photo.filename %></span>
+        </a>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <div class="card">
+      <h3>Activity timeline</h3>
+      <div class="timeline">
+        <% if (events && events.length > 0) { %>
+          <% events.forEach(e => { %>
+          <div class="timeline-item">
+            <span class="timeline-dot"></span>
+            <div>
+              <strong><%= titleCase(e.action) %></strong>
+              <p><%= e.detail || 'Status updated' %></p>
+              <small><%= formatDateTime(e.at) %> <% if (e.actor_id && people[e.actor_id]) { %>· <%= people[e.actor_id].name %><% } else { %>· System<% } %></small>
+            </div>
+          </div>
+          <% }) %>
+        <% } else { %>
+          <p class="muted">No activity records found.</p>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (escalations && escalations.length > 0) { %>
+    <div class="card escalation-box">
+      <h3>Dean escalation history</h3>
+      <p>The repair work did not start within the required time window. Escalation remains in the audit trail.</p>
+      <% escalations.forEach(e => { %>
+      <div class="detail-row">
+        <span>Cycle #<%= e.cycle_number %></span>
+        <b><%= formatDateTime(e.escalated_at) %></b>
+      </div>
+      <% }) %>
+    </div>
+    <% } %>
+  </div>
+
+  <div class="aside-stack">
+    <div class="card">
+      <h3>Current progress</h3>
+      <div class="detail-row">
+        <span>Status</span>
+        <span class="status status-<%= c.status.toLowerCase() %>"><%= titleCase(c.status) %></span>
+      </div>
+      <div class="detail-row">
+        <span>Work started</span>
+        <b><%= c.work_started_at ? formatDateTime(c.work_started_at) : 'Not yet' %></b>
+      </div>
+      <div class="detail-row">
+        <span>Repair reported</span>
+        <b><%= c.work_completed_at ? formatDateTime(c.work_completed_at) : 'Not yet' %></b>
+      </div>
+      <div class="detail-row">
+        <span>Closed</span>
+        <b><%= c.closed_at ? formatDate(c.closed_at) : 'Not yet' %></b>
+      </div>
+    </div>
+
+    <% if (user.role === 'STUDENT' && (c.status === 'AWAITING_CONFIRMATION' || (c.status === 'AUTO_CLOSED' && c.closed_at && Date.now() - new Date(c.closed_at).getTime() <= 7*24*3600000))) { %>
+    <div class="card action-panel">
+      <h3>Was your issue resolved?</h3>
+      <p class="muted">Your feedback helps ensure repairs are actually complete.</p>
+      <% if (c.status === 'AWAITING_CONFIRMATION') { %>
+      <form method="post" action="/student/complaints/<%= c.id %>/verify">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="confirm">
+        <label for="rating">Optional rating</label>
+        <select name="rating" id="rating">
+          <option value="">Skip rating</option>
+          <option value="5">5 - Excellent</option>
+          <option value="4">4 - Good</option>
+          <option value="3">3 - Okay</option>
+          <option value="2">2 - Poor</option>
+          <option value="1">1 - Very poor</option>
+        </select>
+        <label for="comment">Comment (optional)</label>
+        <textarea name="comment" id="comment" rows="2" maxlength="1000"></textarea>
+        <button class="btn btn-primary full" type="submit">✓ Yes, resolved</button>
+      </form>
+      <% } %>
+      <form method="post" action="/student/complaints/<%= c.id %>/verify" class="spaced">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="reopen">
+        <label for="reason">Still facing the issue?</label>
+        <textarea name="reason" id="reason" minlength="5" rows="2" required placeholder="Explain what is still broken..."></textarea>
+        <button class="btn btn-outline full" type="submit">↻ No, reopen complaint</button>
+      </form>
+    </div>
+    <% } %>
+
+    <% if (user.role === 'RECTOR') { %>
+    <div class="card action-panel">
+      <h3>Rector actions</h3>
+      <p class="muted">All actions are recorded in the complaint history.</p>
+
+      <% if (['SUBMITTED','REOPENED'].includes(c.status)) { %>
+      <form method="post" action="/rector/complaints/<%= c.id %>/action">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="review">
+        <button class="btn btn-outline full" type="submit">Mark under review</button>
+      </form>
+      <% } %>
+
+      <% if (['SUBMITTED','UNDER_REVIEW','ASSIGNED','ACCEPTED','REOPENED','ON_HOLD'].includes(c.status)) { %>
+      <form method="post" action="/rector/complaints/<%= c.id %>/action">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="assign">
+        <label for="staff_id">Assign maintenance staff</label>
+        <select name="staff_id" id="staff_id" required>
+          <option value="">Select a technician</option>
+          <% (staff_list || []).forEach(s => { %>
+          <option value="<%= s.id %>" <%= c.current_staff_id === s.id ? 'selected' : '' %>><%= s.name %> (<%= s.login_id %>)</option>
+          <% }) %>
+        </select>
+        <label for="assign_reason">Instructions (optional)</label>
+        <textarea id="assign_reason" name="reason" rows="2" maxlength="600"></textarea>
+        <button class="btn btn-primary full" type="submit">Assign / reassign →</button>
+      </form>
+      <% } %>
+
+      <% if (['SUBMITTED','UNDER_REVIEW','ASSIGNED','ACCEPTED','IN_PROGRESS','ON_HOLD','REOPENED','AWAITING_CONFIRMATION'].includes(c.status)) { %>
+      <form method="post" action="/rector/complaints/<%= c.id %>/action" class="spaced">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="classify">
+        <label>Official category</label>
+        <select name="category">
+          <% categories.forEach(cat => { %>
+          <option value="<%= cat %>" <%= cat === c.effective_category ? 'selected' : '' %>><%= titleCase(cat) %></option>
+          <% }) %>
+        </select>
+        <label>Effective priority</label>
+        <select name="priority">
+          <% priorities.forEach(p => { %>
+          <option value="<%= p %>" <%= p === c.effective_priority ? 'selected' : '' %>><%= titleCase(p) %></option>
+          <% }) %>
+        </select>
+        <button class="btn btn-outline full" type="submit">Update classification</button>
+      </form>
+      <% } %>
+
+      <% if (['SUBMITTED','UNDER_REVIEW'].includes(c.status)) { %>
+      <form method="post" action="/rector/complaints/<%= c.id %>/action" class="spaced">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="reject">
+        <label>Rejection reason (required)</label>
+        <textarea name="reason" rows="2" minlength="8" required></textarea>
+        <button class="btn btn-danger-outline full" type="submit">Reject invalid complaint</button>
+      </form>
+      <% } %>
+
+      <% if (c.status === 'AWAITING_CONFIRMATION') { %>
+      <form method="post" action="/rector/complaints/<%= c.id %>/action" class="spaced">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="verify">
+        <label>Safety / escalation verification note</label>
+        <textarea name="reason" minlength="8" required rows="2"></textarea>
+        <button class="btn btn-outline full" type="submit">Verify exceptional closure</button>
+      </form>
+      <% } %>
+
+      <% if (['CLOSED','AUTO_CLOSED'].includes(c.status)) { %>
+      <form method="post" action="/rector/complaints/<%= c.id %>/action">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <input type="hidden" name="action" value="reopen">
+        <label>Exceptional reopening reason</label>
+        <textarea name="reason" rows="2" required minlength="5"></textarea>
+        <button class="btn btn-outline full" type="submit">Reopen complaint</button>
+      </form>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% if (user.role === 'MAINTENANCE_STAFF' && c.current_staff_id === user.id) { %>
+    <div class="card action-panel">
+      <h3>Update maintenance task</h3>
+      <p class="muted">Record what you actually did; starting work must reflect real activity.</p>
+      <% if (['ASSIGNED','ACCEPTED','IN_PROGRESS','ON_HOLD'].includes(c.status)) { %>
+      <form method="post" action="/staff/complaints/<%= c.id %>/action" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <label for="task_note">Work note / reason</label>
+        <textarea id="task_note" name="note" rows="3" maxlength="1000" placeholder="Explain work or blockers"></textarea>
+        
+        <% if (c.status === 'IN_PROGRESS') { %>
+        <label for="repairphotos">Repair evidence photos (optional)</label>
+        <input type="file" id="repairphotos" name="photos" accept="image/jpeg,image/png,image/webp" multiple>
+        <p class="field-help">Up to 3 repair photos. Available on Progress and Complete.</p>
+        <% } %>
+
+        <% if (c.status === 'ASSIGNED') { %>
+        <button class="btn btn-primary full" type="submit" name="action" value="accept">Accept task</button>
+        <% } else if (c.status === 'ACCEPTED') { %>
+        <button class="btn btn-primary full" type="submit" name="action" value="start">Start work</button>
+        <button class="btn btn-outline full spaced" name="action" value="hold" type="submit">Put on hold</button>
+        <% } else if (c.status === 'IN_PROGRESS') { %>
+        <button class="btn btn-outline full" name="action" value="progress" type="submit">Save progress note</button>
+        <button class="btn btn-outline full spaced" name="action" value="hold" type="submit">Put on hold</button>
+        <button class="btn btn-primary full spaced" name="action" value="complete" type="submit">✓ Mark repair completed</button>
+        <% } else if (c.status === 'ON_HOLD') { %>
+        <button class="btn btn-primary full" name="action" value="resume" type="submit">Resume task</button>
+        <% } %>
+      </form>
+      <% } %>
+    </div>
+    <% } %>
+
+    <% if (user.role === 'DEAN') { %>
+    <div class="card action-panel">
+      <h3>Dean corrective directive</h3>
+      <form method="post" action="/dean/complaints/<%= c.id %>/directive">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <label for="directive">Instructions to Rector</label>
+        <textarea name="directive" id="directive" minlength="10" maxlength="1500" required rows="4" placeholder="Specify the corrective action and follow-up required..."></textarea>
+        <button class="btn btn-primary full" type="submit">Record and notify Rector</button>
+      </form>
+    </div>
+    <% } %>
+
+    <% if (feedback) { %>
+    <div class="card">
+      <h3>Student feedback</h3>
+      <p>Rating: <%= feedback.rating ? feedback.rating : 'Not rated' %> / 5</p>
+      <p><%= feedback.comment || 'No additional comment' %></p>
+    </div>
+    <% } %>
+  </div>
+</div>
+<%- include('partials/footer') %>

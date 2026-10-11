@@ -1,0 +1,74 @@
+<%- include('partials/header', { title: 'New complaint' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">MAINTENANCE REQUEST</div>
+    <h1>Report a problem</h1>
+    <p>Describe the issue. We'll notify your hostel Rector.</p>
+  </div>
+</div>
+
+<% if (!allocation) { %>
+<div class="alert alert-warning">You don't have an active room assignment. Contact System Admin to register a complaint.</div>
+<% } else { %>
+<div class="two-col uneven">
+  <div class="card form-card">
+    <div class="step-indicator">STEP 01 / COMPLAINT DETAILS</div>
+    <form method="post" enctype="multipart/form-data" action="/student/new" id="newComplaintForm">
+      <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+      <input type="hidden" name="idempotency_key" value="<%= idempotency_key %>">
+
+      <label>Hostel and room <span class="field-hint">Verified automatically</span></label>
+      <div class="readonly-input">⌂ &nbsp; <%= allocation[2].name %> <%= allocation[1].building ? '/ ' + allocation[1].building : '' %> / Room <%= allocation[1].number %></div>
+
+      <label for="category">What type of problem?</label>
+      <select name="category" id="category" required>
+        <option value="">Choose category</option>
+        <% categories.forEach(cat => { %>
+          <option value="<%= cat %>"><%= titleCase(cat) %></option>
+        <% }) %>
+      </select>
+
+      <label for="description">Describe the issue</label>
+      <textarea name="description" id="description" rows="5" maxlength="1000" minlength="10" required placeholder="e.g. Ceiling fan is not working. It stopped yesterday."></textarea>
+      <p class="field-help">10–1000 characters. Include anything the repair team should know.</p>
+
+      <label>How urgent is it?</label>
+      <div class="priority-choices">
+        <label><input type="radio" name="priority" value="NORMAL" checked><span>Normal</span></label>
+        <label><input type="radio" name="priority" value="URGENT"><span>Urgent</span></label>
+        <label><input type="radio" name="priority" value="EMERGENCY"><span>Emergency</span></label>
+      </div>
+      <p class="field-help">For danger or immediate risk, contact campus emergency services as well.</p>
+
+      <label for="photos">Attach photos <span class="field-hint">Optional · up to 3</span></label>
+      <input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      <p class="field-help">Each image up to 5 MB; JPG, PNG or WebP.</p>
+
+      <button class="btn btn-primary full" type="submit" id="submitBtn">Submit complaint →</button>
+    </form>
+  </div>
+
+  <div class="aside-stack">
+    <div class="card tip-card">
+      <div class="tip-ico">✦</div>
+      <h3>What happens next?</h3>
+      <ol class="steps">
+        <li>Your complaint gets a unique tracking number.</li>
+        <li>The Rector reviews and assigns maintenance staff.</li>
+        <li>You'll get updates as the repair progresses.</li>
+        <li>Confirm when the problem is fixed.</li>
+      </ol>
+    </div>
+    <div class="card">
+      <h3>Safety first</h3>
+      <p class="muted">Electrical sparks, fire, serious leaks or unsafe locks need immediate human assistance. Do not rely on the website alone for emergencies.</p>
+      <% if (allocation[2].emergency_phone) { %>
+      <a href="tel:<%= allocation[2].emergency_phone %>" class="btn btn-danger-outline full">Call hostel emergency: <%= allocation[2].emergency_phone %></a>
+      <% } else { %>
+      <p class="muted">Emergency contact not configured — ask the Rector or college security office for the official number.</p>
+      <% } %>
+    </div>
+  </div>
+</div>
+<% } %>
+<%- include('partials/footer') %>

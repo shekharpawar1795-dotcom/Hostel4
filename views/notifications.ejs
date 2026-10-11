@@ -1,0 +1,38 @@
+<%- include('partials/header', { title: 'Notifications' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">YOUR ACTIVITY</div>
+    <h1>Notifications</h1>
+    <p>Stay informed about important hostel updates.</p>
+  </div>
+  <form method="post" action="/notifications/read">
+    <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+    <button type="submit" class="btn btn-outline">Mark all as read</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="notification-list">
+    <% if (notes && notes.length > 0) { %>
+      <% notes.forEach(n => { %>
+      <div class="notification-row <%= !n.read_at ? 'unread' : '' %>">
+        <span class="notification-icon">◉</span>
+        <div>
+          <strong><%= n.title %></strong>
+          <p><%= n.body %></p>
+          <small><%= formatDateTime(n.created_at) %></small>
+          <% if (n.complaint_id) { %>
+          <a class="link" href="/complaints/<%= n.complaint_id %>">View complaint →</a>
+          <% } %>
+        </div>
+      </div>
+      <% }) %>
+    <% } else { %>
+      <div class="empty">
+        <h3>No notifications yet</h3>
+        <p>Your alerts will appear here.</p>
+      </div>
+    <% } %>
+  </div>
+</div>
+<%- include('partials/footer') %>

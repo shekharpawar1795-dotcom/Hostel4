@@ -1,0 +1,106 @@
+<%- include('partials/header', { title: 'Student dashboard' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">STUDENT PORTAL</div>
+    <h1>Hello, <%= user.preferred_name || (user.name ? user.name.split(' ')[0] : 'Student') %> 👋</h1>
+    <p>Manage your room complaints and stay updated on maintenance.</p>
+  </div>
+  <a class="btn btn-primary" href="/student/new">＋ New complaint</a>
+</div>
+
+<% if (allocation) { %>
+<div class="location-banner">
+  <div class="banner-icon">⌂</div>
+  <div>
+    <span class="micro">YOUR CURRENT ALLOCATION</span>
+    <h3><%= allocation[2].name %> <span class="dot">·</span> Room <%= allocation[1].number %></h3>
+    <p>Building <%= allocation[1].building %> · Floor <%= allocation[1].floor %></p>
+  </div>
+</div>
+<% } else { %>
+<div class="alert alert-warning">No active hostel room assignment. Please contact System Admin before submitting a complaint.</div>
+<% } %>
+
+<div class="stats-grid">
+  <div class="stat">
+    <div class="stat-label">Total complaints</div>
+    <div class="stat-number"><%= complaints.length %></div>
+    <span class="stat-foot">Recent list</span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Active</div>
+    <div class="stat-number"><%= complaints.filter(c => ['SUBMITTED','UNDER_REVIEW','ASSIGNED','ACCEPTED','IN_PROGRESS','ON_HOLD','REOPENED'].includes(c.status)).length %></div>
+    <span class="stat-foot">Requiring work</span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Awaiting your reply</div>
+    <div class="stat-number"><%= complaints.filter(c => c.status === 'AWAITING_CONFIRMATION').length %></div>
+    <span class="stat-foot">Please verify</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h3>Recent complaints</h3>
+      <p>Track every request in one place.</p>
+    </div>
+    <a href="/student/new" class="link">Create new +</a>
+  </div>
+
+  <% if (complaints && complaints.length > 0) { %>
+  <div class="table-wrap student-desktop-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Category & issue</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% complaints.forEach(c => { %>
+        <tr>
+          <td>
+            <strong><%= c.number %></strong>
+            <small><%= formatDate(c.created_at) %></small>
+          </td>
+          <td>
+            <%= titleCase(c.effective_category) %>
+            <small><%= c.description ? c.description.slice(0, 75) : '' %></small>
+          </td>
+          <td><%= titleCase(c.effective_priority) %></td>
+          <td><span class="status status-<%= c.status.toLowerCase() %>"><%= titleCase(c.status) %></span></td>
+          <td><a href="/complaints/<%= c.id %>">View →</a></td>
+        </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <div class="student-mobile-list">
+    <% complaints.forEach(c => { %>
+    <a href="/complaints/<%= c.id %>" class="student-complaint-card">
+      <div class="mobile-ticket-head">
+        <strong><%= c.number %></strong>
+        <span class="status status-<%= c.status.toLowerCase() %>"><%= titleCase(c.status) %></span>
+      </div>
+      <div class="mobile-ticket-desc"><%= c.description ? c.description.slice(0, 95) : '' %></div>
+      <div class="mobile-ticket-footer">
+        <%= titleCase(c.effective_category) %> · <%= formatDate(c.created_at) %>
+        <span>View details →</span>
+      </div>
+    </a>
+    <% }) %>
+  </div>
+  <% } else { %>
+  <div class="empty">
+    <div class="empty-icon">✦</div>
+    <h3>All clear for now</h3>
+    <p>When something needs fixing, create your first complaint.</p>
+    <a class="btn btn-primary" href="/student/new">Report a problem</a>
+  </div>
+  <% } %>
+</div>
+<%- include('partials/footer') %>

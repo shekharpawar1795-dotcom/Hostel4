@@ -1,0 +1,98 @@
+<%- include('partials/header', { title: 'Rector dashboard' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">HOSTEL MANAGEMENT</div>
+    <h1>Rector overview</h1>
+    <p>Review new requests and keep maintenance work moving.</p>
+  </div>
+</div>
+
+<div class="stats-grid four">
+  <div class="stat">
+    <div class="stat-label">New / Review</div>
+    <div class="stat-number"><%= (counts['SUBMITTED'] || 0) + (counts['UNDER_REVIEW'] || 0) + (counts['REOPENED'] || 0) %></div>
+    <span class="stat-foot">Action required</span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Assigned</div>
+    <div class="stat-number"><%= (counts['ASSIGNED'] || 0) + (counts['ACCEPTED'] || 0) %></div>
+    <span class="stat-foot">Not started</span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">In progress</div>
+    <div class="stat-number"><%= (counts['IN_PROGRESS'] || 0) + (counts['ON_HOLD'] || 0) %></div>
+    <span class="stat-foot">Active repairs</span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Awaiting student</div>
+    <div class="stat-number"><%= (counts['AWAITING_CONFIRMATION'] || 0) %></div>
+    <span class="stat-foot">Verification pending</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <div>
+      <h3>Hostel complaint queue</h3>
+      <p>Showing <%= complaints.length %> of <%= total %> matching complaints across your assigned hostels.</p>
+    </div>
+    <form class="filter-form" method="get" action="/dashboard">
+      <input name="q" value="<%= search || '' %>" placeholder="Search ticket or issue">
+      <select name="status">
+        <option value="">All statuses</option>
+        <% ['SUBMITTED','UNDER_REVIEW','ASSIGNED','ACCEPTED','IN_PROGRESS','ON_HOLD','AWAITING_CONFIRMATION','REOPENED','CLOSED','AUTO_CLOSED','REJECTED'].forEach(st => { %>
+        <option value="<%= st %>" <%= st === status_filter ? 'selected' : '' %>><%= titleCase(st) %></option>
+        <% }) %>
+      </select>
+      <button class="btn btn-outline" type="submit">Filter</button>
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <table id="complaintsTable">
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Issue</th>
+          <th>Priority</th>
+          <th>Status</th>
+          <th>Started</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (complaints && complaints.length > 0) { %>
+          <% complaints.forEach(c => { %>
+          <tr>
+            <td>
+              <strong><%= c.number %></strong>
+              <small><%= formatDate(c.created_at) %></small>
+            </td>
+            <td>
+              <%= c.description ? c.description.slice(0, 65) : '' %>
+              <small><%= titleCase(c.effective_category) %></small>
+            </td>
+            <td><span class="priority-<%= c.effective_priority.toLowerCase() %>"><%= titleCase(c.effective_priority) %></span></td>
+            <td><span class="status status-<%= c.status.toLowerCase() %>"><%= titleCase(c.status) %></span></td>
+            <td><%= c.work_started_at ? 'Yes' : 'No' %></td>
+            <td><a href="/complaints/<%= c.id %>">Manage →</a></td>
+          </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="6" class="empty-cell">No complaints for assigned hostels.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <% if (page_num > 1) { %>
+    <a href="/dashboard?page=<%= page_num - 1 %>&q=<%= encodeURIComponent(search || '') %>&status=<%= encodeURIComponent(status_filter || '') %>">← Previous</a>
+    <% } %>
+    <span>Page <%= page_num %></span>
+    <% if (page_num * 25 < total) { %>
+    <a href="/dashboard?page=<%= page_num + 1 %>&q=<%= encodeURIComponent(search || '') %>&status=<%= encodeURIComponent(status_filter || '') %>">Next →</a>
+    <% } %>
+  </div>
+</div>
+<%- include('partials/footer') %>

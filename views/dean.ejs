@@ -1,0 +1,62 @@
+<%- include('partials/header', { title: 'Dean oversight' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">INSTITUTIONAL OVERSIGHT</div>
+    <h1>Dean escalation center</h1>
+    <p>Complaints where repair work was not started within 48 hours.</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat">
+    <div class="stat-label">Escalation records</div>
+    <div class="stat-number"><%= escalations.length %></div>
+    <span class="stat-foot">Latest 100 records</span>
+  </div>
+  <div class="stat">
+    <div class="stat-label">Unresolved</div>
+    <div class="stat-number"><%= unresolved %></div>
+    <span class="stat-foot">Review queue below</span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h3>Escalated complaints</h3>
+    <span class="tag tag-red">48-hour policy</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Complaint</th>
+          <th>Issue</th>
+          <th>Work cycle</th>
+          <th>Escalated at</th>
+          <th>Current status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (escalations && escalations.length > 0) { %>
+          <% escalations.forEach(e => { %>
+            <% const c = c_by_id[e.complaint_id]; %>
+            <% if (c) { %>
+            <tr>
+              <td><strong><%= c.number %></strong></td>
+              <td><%= c.description ? c.description.slice(0, 75) : '' %></td>
+              <td>#<%= e.cycle_number %></td>
+              <td><%= formatDateTime(e.escalated_at) %></td>
+              <td><span class="status status-<%= c.status.toLowerCase() %>"><%= titleCase(c.status) %></span></td>
+              <td><a href="/complaints/<%= c.id %>">Review →</a></td>
+            </tr>
+            <% } %>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="6" class="empty-cell">No Dean escalations. Complaints meeting the 48-hour rule appear here.</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,35 @@
+<%- include('partials/header', { title: 'Sign in' }) %>
+<div class="login-outer">
+  <div class="login-art">
+    <div class="login-art-inner">
+      <div class="mark">H</div>
+      <div class="overline">CAMPUS OPERATIONS</div>
+      <h1>Better hostel living.<br>One request at a time.</h1>
+      <p>Report issues, coordinate repairs, and keep everyone informed with one trusted platform.</p>
+      <div class="login-features">
+        <span>✓ Transparent status</span>
+        <span>✓ Faster repairs</span>
+        <span>✓ Accountable service</span>
+      </div>
+    </div>
+  </div>
+  <div class="login-side">
+    <div class="login-card">
+      <div class="mobile-brand"><span class="brand-icon">H</span> HostelCare</div>
+      <div class="eyebrow">WELCOME BACK</div>
+      <h2>Sign in to your account</h2>
+      <p class="muted">Students: enter your URN. Staff: enter your assigned login ID.</p>
+      <% if (locals.msg) { %><div class="alert <%= locals.kind === 'error' ? 'alert-error' : 'alert-success' %>"><%= msg %></div><% } %>
+      <form method="post" action="/login">
+        <input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>">
+        <label for="login_id">URN / Login ID</label>
+        <input id="login_id" name="login_id" placeholder="e.g. 2026CS001" autocomplete="username" required autofocus maxlength="60">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
+        <button class="btn btn-primary full" type="submit">Sign in <span>→</span></button>
+      </form>
+      <p class="tiny">Forgot your password? Contact the System Admin to get a new temporary password securely.</p>
+    </div>
+  </div>
+</div>
+<%- include('partials/footer') %>

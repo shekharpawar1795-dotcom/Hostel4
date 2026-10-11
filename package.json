@@ -1,0 +1,24 @@
+{
+  "name": "hostelcare-node-sqlite-test",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "HostelCare Node.js/Express/EJS SQLite single-server test edition",
+  "scripts": {
+    "setup": "node scripts/setup.js",
+    "admin:init": "node --env-file=.env scripts/bootstrap-admin.js",
+    "dev": "node --env-file=.env server.js",
+    "start": "node --env-file=.env server.js",
+    "test": "node --test tests/*.test.js",
+    "backup": "node --env-file=.env scripts/backup.js",
+    "import:json": "node --env-file=.env scripts/import-legacy-json.js",
+    "check": "node --check server.js && node --check store.js && node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "multer": "^2.0.2"
+  },
+  "engines": {"node": ">=22.13.0"}
+}

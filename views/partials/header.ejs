@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1">
+ <title><%= typeof title !== 'undefined' ? title : 'HostelCare' %> · HCMS</title>
+ <link rel="stylesheet" href="/static/style.css">
+ <script defer src="/static/app.js"></script>
+</head>
+<body>
+<% if (locals.user) { %>
+<div class="app-shell">
+ <aside class="sidebar" id="sidebar">
+  <div class="brand"><span class="brand-icon">H</span><span>HostelCare<small>Campus maintenance</small></span></div>
+  <div class="section-label">WORKSPACE</div>
+  <nav class="main-nav" aria-label="Main navigation">
+   <a href="/dashboard" class="nav-link"><span class="nav-ico">▦</span>Dashboard</a>
+   <% if (user.role === 'STUDENT') { %><a href="/student/new" class="nav-link"><span class="nav-ico">＋</span>New complaint</a><% } %>
+   <a href="/notifications" class="nav-link"><span class="nav-ico">◉</span>Notifications <% if (locals.unread_count > 0) { %><span class="counter"><%= unread_count %></span><% } %></a>
+   <a href="/profile" class="nav-link"><span class="nav-ico">♙</span>My profile</a>
+   <a href="/profile/password" class="nav-link"><span class="nav-ico">◇</span>Change password</a>
+  </nav>
+  <div class="sidebar-bottom">
+   <div class="profile-avatar"><%= (user.preferred_name || user.name)[0].toUpperCase() %></div>
+   <div class="profile-info"><strong><%= user.preferred_name || user.name %></strong><small><%= user.role.replace(/_/g, ' ') %></small></div>
+  </div>
+  <form method="post" action="/logout" class="logout"><input type="hidden" name="csrf_token" value="<%= locals.csrf || '' %>"><button class="btn btn-ghost btn-small" type="submit">Sign out →</button></form>
+ </aside>
+ <div class="main-column">
+  <header class="topbar">
+   <button id="menuToggle" class="menu-toggle" aria-label="Open navigation" type="button">☰</button>
+   <div class="topbar-text">Hostel Complaint & Maintenance System</div>
+   <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+     <span class="tag" style="display:inline-flex; align-items:center; gap:5px; font-size:10px; font-weight:600; padding:4px 8px;">
+       <span style="height:6px;width:6px;border-radius:50%;background:#087d82;display:inline-block"></span>
+       SQLite database · Scheduled checks
+     </span>
+     <a href="/notifications" class="header-bell" aria-label="Notifications">♧ <% if (locals.unread_count > 0) { %><b><%= unread_count %></b><% } %></a>
+     <a class="topbar-user" href="/profile"><%= user.login_id %></a>
+   </div>
+  </header>
+  <main class="content" id="mainContent">
+   <% if (locals.msg) { %><div class="alert <%= locals.kind === 'error' ? 'alert-error' : 'alert-success' %>" role="status"><%= msg %></div><% } %>
+<% } else { %>
+<main>
+<% } %>

@@ -1,0 +1,39 @@
+<%- include('partials/header', { title: 'Maintenance tasks' }) %>
+<div class="page-header">
+  <div>
+    <div class="eyebrow">MAINTENANCE WORKSPACE</div>
+    <h1>My assigned tasks</h1>
+    <p>Accept tasks, record repairs and keep students informed.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">
+    <h3>Your work queue</h3>
+    <span class="tag"><%= complaints.length %> tasks</span>
+  </div>
+
+  <% if (complaints && complaints.length > 0) { %>
+    <% complaints.forEach(c => { %>
+    <a href="/complaints/<%= c.id %>" class="task-tile">
+      <div class="task-icon">⚒</div>
+      <div class="task-body">
+        <strong><%= c.number %> · <%= titleCase(c.effective_category) %></strong>
+        <p><%= c.description ? c.description.slice(0, 130) : '' %></p>
+        <small>Submitted <%= formatDate(c.created_at) %></small>
+      </div>
+      <div class="task-right">
+        <span class="status status-<%= c.status.toLowerCase() %>"><%= titleCase(c.status) %></span>
+        <span class="arrow">→</span>
+      </div>
+    </a>
+    <% }) %>
+  <% } else { %>
+    <div class="empty">
+      <div class="empty-icon">✓</div>
+      <h3>No tasks assigned</h3>
+      <p>New assignments from the Rector will appear here.</p>
+    </div>
+  <% } %>
+</div>
+<%- include('partials/footer') %>

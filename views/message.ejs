@@ -1,0 +1,10 @@
+<%- include('partials/header', { title: 'Request message' }) %>
+<div class="error-panel">
+  <h1><%= typeof title !== 'undefined' ? title : 'Information' %></h1>
+  <p><%= typeof error !== 'undefined' ? error : (locals.msg || '') %></p>
+  <% if (locals.status) { %>
+  <p class="muted">Status code: <%= status %></p>
+  <% } %>
+  <a class="btn btn-primary" href="/dashboard">Go back to dashboard</a>
+</div>
+<%- include('partials/footer') %>
